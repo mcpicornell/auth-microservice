@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: .
+    container_name: auth_service
+    env_file:
+      - .env.pro
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload

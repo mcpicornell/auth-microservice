@@ -1,0 +1,108 @@
+project:
+  name: "auth-microservice"
+  architecture: "hexagonal"
+  version: "1.0.0"
+  
+rules:
+  comments: "forbidden"
+  docstrings: "forbidden"
+  documentation: "english_only"
+  credentials: "no_plain_text"
+  
+structure:
+  domain:
+    description: "Core business logic and entities"
+    folders:
+      - "src/app/domain/entities/"
+      - "src/app/domain/ports/"
+      - "src/app/domain/services/"
+    rules:
+      - "No external dependencies"
+      - "Pure business logic"
+      - "Use dataclasses for entities"
+      - "Never import from infra"
+      
+  adapters:
+    description: "External integrations implementing ports"
+    folders:
+      - "src/app/adapters/database/"
+      - "src/app/adapters/security/"
+      - "src/app/adapters/messaging/"
+    rules:
+      - "Implement domain ports"
+      - "Handle external dependencies"
+      - "No business logic"
+      - "Only data transformation between domain and infra"
+      - "Use repositories for database operations"
+      - "Can import from domain and infra only"
+      - "Use manager classes from infra"
+      
+  infra:
+    description: "Infrastructure and delivery mechanisms"
+    folders:
+      - "src/app/infra/database/repositories/"
+      - "src/app/infra/messaging/"
+      - "src/app/infra/auth/"
+      - "src/app/infra/api/handlers/"
+    rules:
+      - "Database models in repositories folder"
+      - "Repository classes for database operations"
+      - "Manager classes for external services"
+      - "API handlers"
+      - "Framework-specific code"
+      - "No business logic in repositories"
+      - "Ports defined as protocols in same file as manager"
+      
+  settings:
+    description: "Configuration management"
+    folders:
+      - "src/app/settings/"
+    rules:
+      - "Environment variables"
+      - "No credentials in defaults"
+      
+  tests:
+    description: "Test structure following src mirror"
+    folders:
+      - "tests/app/domain/"
+      - "tests/app/adapters/"
+      - "tests/app/infra/"
+      - "tests/app/settings/"
+    rules:
+      - "Mirror src structure exactly"
+      - "Test files named test_<filename>.py"
+      - "Use pytest-mock for mocking"
+      - "Unit tests for each component"
+      - "Integration tests for API endpoints"
+      - "Coverage minimum 90% per file"
+      
+patterns:
+  - "dependency_injection"
+  - "async_first"
+  - "hexagonal_ports_adapters"
+  - "clean_architecture"
+  - "dataclass_over_dict"
+  
+forbidden:
+  - "comments"
+  - "docstrings"
+  - "plain_text_credentials"
+  - "business_logic_in_adapters"
+  - "framework_in_domain"
+  - "database_operations_in_adapters"
+  - "direct_database_access_from_adapters"
+  - "infra_imports_from_domain"
+  - "domain_imports_from_infra"
+  - "passing_full_settings_to_managers"
+  
+workflows:
+  - "/create-adapter"
+  - "/create-handler"
+  
+environment:
+  files:
+    - ".env.pro"
+  variables:
+    database: "DB_SQL_*"
+    jwt: "JWT_*"
+    rabbitmq: "RABBITMQ_*"
