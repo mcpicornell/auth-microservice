@@ -95,10 +95,6 @@ forbidden:
   - "domain_imports_from_infra"
   - "passing_full_settings_to_managers"
   
-workflows:
-  - "/create-adapter"
-  - "/create-handler"
-  
 environment:
   files:
     - ".env.pro"

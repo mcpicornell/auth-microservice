@@ -1,0 +1,39 @@
+coding_standards:
+  style:
+    comments: "forbidden"
+    docstrings: "forbidden"
+    language: "english_only"
+    
+  data_structures:
+    primary: "dataclasses"
+    forbidden: ["dictionaries", "lists_for_entities"]
+    
+  async_patterns:
+    required: true
+    io_operations: "async_only"
+    
+  imports:
+    domain_rules:
+      - "no_external_dependencies"
+      - "no_infra_imports"
+    adapter_rules:
+      - "can_import_domain"
+      - "can_import_infra"
+    infra_rules:
+      - "can_import_domain"
+      - "framework_specific_allowed"
+      
+  naming:
+    files:
+      tests: "test_<filename>.py"
+    classes:
+      entities: "<Name>Entity"
+      inputs: "<Action><Entity>Input"
+      outputs: "<Action><Entity>Output"
+      ports: "<Name>Port"
+      adapters: "<Name>Adapter"
+      handlers: "<Name>Handler"
+      
+  security:
+    credentials: "no_plain_text"
+    environment: "secure_defaults_only"
