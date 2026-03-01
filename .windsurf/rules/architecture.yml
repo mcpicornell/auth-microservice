@@ -36,7 +36,14 @@ structure:
       - "Use repositories for database operations"
       - "Can import from domain and infra only"
       - "Use manager classes from infra"
-      
+      - "Use services for business logic"
+      - "Use repositories for database operations"
+      - "No domain imports in infra"
+      - "No infra imports in domain"
+      - "Adapters must import from domain and infra"
+      - "Adapters can't herigate from domain ports"
+      - "NO DICTS ALLOWED - Use dataclasses only for all parameters and returns"
+      - "Domain ports use Protocol instead of ABC"
   infra:
     description: "Infrastructure and delivery mechanisms"
     folders:
@@ -52,6 +59,14 @@ structure:
       - "Framework-specific code"
       - "No business logic in repositories"
       - "Ports defined as protocols in same file as manager"
+      - "Use adapters for external integrations"
+      - "Use managers for external services"
+      - "Use handlers for API endpoints"
+      - "Use services for business logic"
+      - "Use repositories for database operations"
+      - "No domain imports in infra"
+      - "No infra imports in domain"
+      - "Adapters must import from domain and infra"
       
   settings:
     description: "Configuration management"

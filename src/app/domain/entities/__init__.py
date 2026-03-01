@@ -1,25 +1,28 @@
+from .event_message import EventMessage
+from .token import CreateTokenInput, CreateTokenOutput, DecodedToken, TokenEntity
 from .user import (
-    UserEntity,
     CreateUserInput,
     CreateUserOutput,
+    GetUserOutput,
     LoginInput,
     LoginOutput,
-    UserResponse
-)
-from .token import (
-    TokenEntity,
-    CreateTokenInput,
-    CreateTokenOutput
+    UpdateUserInput,
+    UpdateUserOutput,
+    UserEntity,
 )
 
 __all__ = [
     "UserEntity",
-    "CreateUserInput", 
+    "CreateUserInput",
     "CreateUserOutput",
     "LoginInput",
     "LoginOutput",
-    "UserResponse",
+    "UpdateUserInput",
+    "GetUserOutput",
+    "UpdateUserOutput",
     "TokenEntity",
     "CreateTokenInput",
-    "CreateTokenOutput"
+    "CreateTokenOutput",
+    "DecodedToken",
+    "EventMessage",
 ]

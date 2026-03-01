@@ -38,6 +38,16 @@ Before starting implementation, I'll ask up to 4 clarifying questions with 3 opt
    - Option B: Integration with existing features
    - Option C: Multi-system integration
 
+## Interactive Selection System
+
+Users can respond with:
+- **Combined format**: `1A, 2B, 3C, 4A`
+- **Individual format**: 
+  - Question 1: [A/B/C]
+  - Question 2: [A/B/C]
+  - Question 3: [A/B/C]
+  - Question 4: [A/B/C]
+
 Based on your answers, I'll create a detailed implementation plan before proceeding.
 
 ## Tasks

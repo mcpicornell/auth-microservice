@@ -5,10 +5,11 @@ from src.app.domain.entities.token import CreateTokenInput
 from src.app.domain.entities.user import (
     CreateUserInput,
     CreateUserOutput,
+    GetUserOutput,
     LoginInput,
     LoginOutput,
     UpdateUserInput,
-    UserEntity,
+    UpdateUserOutput,
 )
 from src.app.domain.ports import (
     EventPublisherPort,
@@ -31,11 +32,15 @@ class AuthService:
     async def create_user(self, input_data: CreateUserInput) -> CreateUserOutput:
         existing_user = await self.user_repository.get_by_email(input_data.email)
         if existing_user:
-            raise ValueError("Email already registered")
+            return CreateUserOutput(
+                user=None, success=False, message="Email already registered"
+            )
 
         existing_user = await self.user_repository.get_by_username(input_data.username)
         if existing_user:
-            raise ValueError("Username already taken")
+            return CreateUserOutput(
+                user=None, success=False, message="Username already taken"
+            )
 
         user_entity = await self.user_repository.create(input_data)
 
@@ -50,13 +55,7 @@ class AuthService:
         await self.event_publisher.publish(event_message)
 
         return CreateUserOutput(
-            id=user_entity.id,
-            email=user_entity.email,
-            username=user_entity.username,
-            is_active=user_entity.is_active,
-            is_admin=user_entity.is_admin,
-            created_at=user_entity.created_at,
-            updated_at=user_entity.updated_at,
+            user=user_entity, success=True, message="User created successfully"
         )
 
     async def login(self, input_data: LoginInput) -> LoginOutput:
@@ -82,34 +81,32 @@ class AuthService:
             access_token=access_token_output.access_token,
             refresh_token=refresh_token_output.refresh_token,
             token_type="bearer",
-            user_id=user.id,
-            email=user.email,
-            username=user.username,
+            user=user,
         )
 
-    async def get_user_by_id(self, user_id: UUID) -> UserEntity:
+    async def get_user(self, user_id: UUID) -> GetUserOutput:
         user = await self.user_repository.get_by_id(user_id)
         if not user:
-            raise ValueError("User not found")
-        return user
+            return GetUserOutput(user=None, success=False, message="User not found")
+        return GetUserOutput(user=user, success=True)
 
-    async def get_user_by_email(self, email: str) -> UserEntity:
+    async def get_user_by_email(self, email: str) -> GetUserOutput:
         user = await self.user_repository.get_by_email(email)
         if not user:
-            raise ValueError("User not found")
-        return user
+            return GetUserOutput(user=None, success=False, message="User not found")
+        return GetUserOutput(user=user, success=True)
 
-    async def update_user(
-        self, user_id: UUID, input_data: UpdateUserInput
-    ) -> UserEntity:
-        existing_user = await self.user_repository.get_by_id(user_id)
+    async def update_user(self, input_data: UpdateUserInput) -> UpdateUserOutput:
+        existing_user = await self.user_repository.get_by_id(input_data.id)
         if not existing_user:
-            raise ValueError("User not found")
+            return UpdateUserOutput(user=None, success=False, message="User not found")
 
         if input_data.email and input_data.email != existing_user.email:
             email_user = await self.user_repository.get_by_email(input_data.email)
             if email_user:
-                raise ValueError("Email already registered")
+                return UpdateUserOutput(
+                    user=None, success=False, message="Email already registered"
+                )
             existing_user.email = input_data.email
 
         if input_data.username and input_data.username != existing_user.username:
@@ -117,7 +114,9 @@ class AuthService:
                 input_data.username
             )
             if username_user:
-                raise ValueError("Username already taken")
+                return UpdateUserOutput(
+                    user=None, success=False, message="Username already taken"
+                )
             existing_user.username = input_data.username
 
         if input_data.is_active is not None:
@@ -138,4 +137,6 @@ class AuthService:
         )
         await self.event_publisher.publish(event_message)
 
-        return updated_user
+        return UpdateUserOutput(
+            user=updated_user, success=True, message="User updated successfully"
+        )

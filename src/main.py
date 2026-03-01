@@ -4,21 +4,21 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.app.dependencies_container import DependenciesContainer
-from src.app.settings import get_settings
+
+API_V1_PREFIX = "/v1"
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    settings = get_settings()
-    container = DependenciesContainer(settings)
+async def lifespan(fastapi_app: FastAPI):
+    container = DependenciesContainer()
     await container.initialize()
-    app.state.container = container
+    fastapi_app.state.container = container
 
     auth_handler = container.get_auth_handler()
     user_handler = container.get_user_handler()
 
-    app.include_router(auth_handler.router)
-    app.include_router(user_handler.router)
+    fastapi_app.include_router(auth_handler.router, prefix=API_V1_PREFIX)
+    fastapi_app.include_router(user_handler.router, prefix=API_V1_PREFIX)
 
     yield
 

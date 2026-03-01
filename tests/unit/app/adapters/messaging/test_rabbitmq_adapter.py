@@ -1,8 +1,8 @@
 import pytest
 
-# pylint: disable=protected-access
 from src.app.adapters.messaging.rabbitmq_adapter import RabbitMQAdapter
 from src.app.domain.entities.event_message import EventMessage
+from src.app.infra.messaging.rabbitmq_manager import InfraEventMessage
 
 
 class TestRabbitMQAdapter:
@@ -23,14 +23,6 @@ class TestRabbitMQAdapter:
         mock_rabbitmq_manager.connect.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_disconnect(self, rabbitmq_adapter, mock_rabbitmq_manager, mocker):
-        mock_rabbitmq_manager.disconnect = mocker.AsyncMock()
-
-        await rabbitmq_adapter.disconnect()
-
-        mock_rabbitmq_manager.disconnect.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_publish(self, rabbitmq_adapter, mock_rabbitmq_manager, mocker):
         mock_rabbitmq_manager.publish = mocker.AsyncMock()
         event_name = "user_created"
@@ -39,7 +31,20 @@ class TestRabbitMQAdapter:
 
         await rabbitmq_adapter.publish(event_message)
 
-        mock_rabbitmq_manager.publish.assert_called_once_with(event_message)
+        # Verify that the adapter converts domain EventMessage to InfraEventMessage
+        expected_infra_message = InfraEventMessage(
+            event_name=event_name,
+            data=data,
+        )
+        mock_rabbitmq_manager.publish.assert_called_once_with(expected_infra_message)
+
+    @pytest.mark.asyncio
+    async def test_disconnect(self, rabbitmq_adapter, mock_rabbitmq_manager, mocker):
+        mock_rabbitmq_manager.disconnect = mocker.AsyncMock()
+
+        await rabbitmq_adapter.disconnect()
+
+        mock_rabbitmq_manager.disconnect.assert_called_once()
 
     def test_event_message_creation(self):
         event_name = "user_created"

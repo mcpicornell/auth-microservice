@@ -31,6 +31,7 @@ class CreateUserInput:
 
 @dataclass
 class UpdateUserInput:
+    id: UUID
     email: Optional[str] = None
     username: Optional[str] = None
     is_active: Optional[bool] = None
@@ -39,13 +40,9 @@ class UpdateUserInput:
 
 @dataclass
 class CreateUserOutput:
-    id: UUID
-    email: str
-    username: str
-    is_active: bool
-    is_admin: bool
-    created_at: datetime
-    updated_at: datetime
+    user: UserEntity
+    success: bool
+    message: Optional[str] = None
 
 
 @dataclass
@@ -58,18 +55,19 @@ class LoginInput:
 class LoginOutput:
     access_token: str
     refresh_token: str
-    user_id: UUID
-    email: str
-    username: str
+    user: UserEntity
     token_type: str = "bearer"
 
 
 @dataclass
-class UserResponse:
-    id: UUID
-    email: str
-    username: str
-    is_active: bool
-    is_admin: bool
-    created_at: datetime
-    updated_at: datetime
+class UpdateUserOutput:
+    user: UserEntity
+    success: bool
+    message: Optional[str] = None
+
+
+@dataclass
+class GetUserOutput:
+    user: UserEntity
+    success: bool
+    message: Optional[str] = None

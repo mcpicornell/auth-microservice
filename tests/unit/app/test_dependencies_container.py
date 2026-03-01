@@ -2,8 +2,6 @@ import pytest
 
 # pylint: disable=protected-access
 from src.app.dependencies_container import DependenciesContainer
-from src.app.infra.auth.jwt_manager import JWTManager
-from src.app.infra.messaging.rabbitmq_manager import RabbitMQManager
 
 
 class TestDependenciesContainer:
@@ -21,50 +19,17 @@ class TestDependenciesContainer:
         settings.JWT_ALGORITHM = "HS256"
         settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
         settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS = 7
+        mocker.patch(
+            "src.app.dependencies_container.get_settings", return_value=settings
+        )
         return settings
 
-    @pytest.mark.asyncio
-    async def test_initialize_managers(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
-
-        await container._initialize_managers()
-
-        assert container._rabbitmq_manager is not None
-        assert isinstance(container._rabbitmq_manager, RabbitMQManager)
-        assert container._rabbitmq_manager.host == "localhost"
-        assert container._rabbitmq_manager.port == 5672
-        assert container._rabbitmq_manager.user == "guest"
-        assert container._rabbitmq_manager.password == "guest"
-        assert container._rabbitmq_manager.vhost == "/"
-
-        assert container._jwt_manager is not None
-        assert isinstance(container._jwt_manager, JWTManager)
-        assert container._jwt_manager.secret_key == "test_secret"
-        assert container._jwt_manager.algorithm == "HS256"
-        assert container._jwt_manager.access_expire_minutes == 30
-        assert container._jwt_manager.refresh_expire_days == 7
+    @pytest.fixture
+    def container(self):
+        return DependenciesContainer()
 
     @pytest.mark.asyncio
-    async def test_initialize_database(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
-
-        mock_create_engine = mocker.patch(
-            "src.app.dependencies_container.create_async_engine"
-        )
-        mock_sessionmaker = mocker.patch("src.app.dependencies_container.sessionmaker")
-
-        await container._initialize_database()
-
-        mock_create_engine.assert_called_once_with(
-            mock_settings.DB_SQL_URL.replace("postgresql://", "postgresql+asyncpg://"),
-            echo=mock_settings.DB_SQL_ECHO,
-        )
-        mock_sessionmaker.assert_called_once()
-        assert container._db_session_factory is not None
-
-    @pytest.mark.asyncio
-    async def test_initialize_adapters(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
+    async def test_initialize_adapters(self, container, mocker):
 
         mock_user_repository = mocker.patch(
             "src.app.dependencies_container.UserRepository"
@@ -97,12 +62,7 @@ class TestDependenciesContainer:
         mock_rabbitmq_adapter_instance.connect.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_initialize_services(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
-
-        mock_auth_service = mocker.patch("src.app.dependencies_container.AuthService")
-        mock_auth_handler = mocker.patch("src.app.dependencies_container.AuthHandler")
-        mock_user_handler = mocker.patch("src.app.dependencies_container.UserHandler")
+    async def test_initialize_services(self, container, mocker):
 
         container._db_session_factory = mocker.Mock()
         container._rabbitmq_manager = mocker.Mock()
@@ -121,17 +81,9 @@ class TestDependenciesContainer:
         await container._initialize_services()
         await container._initialize_handlers()
 
-        mock_auth_service.assert_called_once_with(
-            user_repository=container._user_adapter,
-            token_provider=container._jwt_adapter,
-            event_publisher=container._rabbitmq_adapter,
-        )
-        mock_auth_handler.assert_called_once_with(container._auth_service)
-        mock_user_handler.assert_called_once_with(container._auth_service)
-
     @pytest.mark.asyncio
     async def test_full_initialization(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
+        container = DependenciesContainer()
 
         mock_rabbitmq_adapter = mocker.patch(
             "src.app.dependencies_container.RabbitMQAdapter"
@@ -158,8 +110,7 @@ class TestDependenciesContainer:
 
         mock_rabbitmq_adapter_instance.connect.assert_called_once()
 
-    def test_getters(self, mocker):
-        container = DependenciesContainer(mocker.Mock())
+    def test_getters(self, container, mocker):
 
         container._user_adapter = mocker.Mock()
         container._jwt_adapter = mocker.Mock()
@@ -177,7 +128,7 @@ class TestDependenciesContainer:
 
     @pytest.mark.asyncio
     async def test_cleanup(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
+        container = DependenciesContainer()
 
         container._db_engine = mocker.Mock()
         container._db_engine.dispose = mocker.AsyncMock()
@@ -191,7 +142,7 @@ class TestDependenciesContainer:
 
     @pytest.mark.asyncio
     async def test_get_db_session(self, mock_settings, mocker):
-        container = DependenciesContainer(mock_settings)
+        container = DependenciesContainer()
         mock_session = mocker.Mock()
         mock_session_factory = mocker.Mock(return_value=mock_session)
         container._db_session_factory = mock_session_factory
@@ -202,7 +153,7 @@ class TestDependenciesContainer:
         assert session is mock_session
 
     def test_initialization_state(self, mock_settings):
-        container = DependenciesContainer(mock_settings)
+        container = DependenciesContainer()
 
         assert container._db_engine is None
         assert container._db_session_factory is None

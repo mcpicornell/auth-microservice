@@ -1,9 +1,11 @@
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
 
 from src.app.adapters.security.jwt_adapter import JWTAdapter
-from src.app.domain.entities.token import CreateTokenInput, DecodedToken
+from src.app.domain.entities.token import CreateTokenInput
+from src.app.infra.auth.jwt_manager import DecodedToken as InfraDecodedToken
 
 
 class TestJWTAdapter:
@@ -26,12 +28,12 @@ class TestJWTAdapter:
         result = jwt_adapter.create_access_token(sample_input)
 
         mock_jwt_manager.create_access_token.assert_called_once_with(
-            sample_input.user_id, sample_input.email
+            user_id=sample_input.user_id, email=sample_input.email
         )
         assert result.access_token == expected_token
         assert result.refresh_token == ""
         assert result.token_type == "bearer"
-        assert result.expires_in == 0
+        assert result.expires_in == 1800
 
     def test_create_refresh_token(self, jwt_adapter, mock_jwt_manager, sample_input):
         expected_token = "refresh_token_123"
@@ -40,29 +42,37 @@ class TestJWTAdapter:
         result = jwt_adapter.create_refresh_token(sample_input)
 
         mock_jwt_manager.create_refresh_token.assert_called_once_with(
-            sample_input.user_id, sample_input.email
+            user_id=sample_input.user_id, email=sample_input.email
         )
         assert result.access_token == ""
         assert result.refresh_token == expected_token
         assert result.token_type == "bearer"
-        assert result.expires_in == 0
+        assert result.expires_in == 604800
 
     def test_decode_token(self, jwt_adapter, mock_jwt_manager):
         token = "test_token"
-        user_id = str(uuid4())
+        user_id = uuid4()
         email = "test@example.com"
-        expected_decoded = DecodedToken(
-            sub=user_id, email=email, exp=1234567890, iat=1234567800, type="access"
+        exp_time = datetime.now(timezone.utc)
+        iat_time = datetime.now(timezone.utc)
+
+        # Mock infra DecodedToken
+        infra_decoded = InfraDecodedToken(
+            sub=str(user_id),
+            email=email,
+            exp=exp_time,
+            iat=iat_time,
+            token_type="access",
         )
-        mock_jwt_manager.decode_token.return_value = expected_decoded
+        mock_jwt_manager.decode_token.return_value = infra_decoded
 
         result = jwt_adapter.decode_token(token)
 
         mock_jwt_manager.decode_token.assert_called_once_with(token)
-        assert result.sub == user_id
+        assert result.sub == str(user_id)
         assert result.email == email
-        assert result.exp == 1234567890
-        assert result.iat == 1234567800
+        assert result.exp == int(exp_time.timestamp())
+        assert result.iat == int(iat_time.timestamp())
         assert result.type == "access"
 
     def test_verify_token(self, jwt_adapter, mock_jwt_manager):

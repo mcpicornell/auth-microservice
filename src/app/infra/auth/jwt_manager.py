@@ -1,9 +1,19 @@
 from datetime import datetime, timedelta, timezone
 from typing import Protocol
+from uuid import UUID
 
 from jose import JWTError, jwt
 
-from src.app.domain.entities.token import DecodedToken
+
+class DecodedToken:
+    def __init__(
+        self, sub: str, email: str, exp: datetime, iat: datetime, token_type: str
+    ):
+        self.user_id = UUID(sub)
+        self.email = email
+        self.exp = exp
+        self.iat = iat
+        self.type = token_type
 
 
 class JWTPort(Protocol):
@@ -62,7 +72,7 @@ class JWTManager:
                 email=payload["email"],
                 exp=payload["exp"],
                 iat=payload["iat"],
-                type=payload["type"],
+                token_type=payload["type"],
             )
         except JWTError as exc:
             raise ValueError("Invalid token") from exc
