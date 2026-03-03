@@ -25,7 +25,7 @@ dependencies = [
     "pytest-cov>=7.0.0",
     "aio-pika>=9.6.1",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 [build-system]
 requires = ["hatchling"]
@@ -36,7 +36,7 @@ packages = ["src"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

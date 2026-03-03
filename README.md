@@ -17,7 +17,7 @@ src/app/
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - PostgreSQL 15+
 - RabbitMQ 3.12+
 - Docker & Docker Compose

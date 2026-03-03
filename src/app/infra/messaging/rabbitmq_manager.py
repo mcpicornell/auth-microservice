@@ -1,17 +1,18 @@
-from dataclasses import dataclass
-from typing import Any, Dict, Protocol
+from typing import Protocol
 
 from aio_pika import Message, connect_robust
 
+from .rabbitmq_types import EventMessage
 
-@dataclass
+
 class InfraEventMessage:
-    event_name: str
-    data: Dict[str, Any]
+    def __init__(self, event_name: str, data: dict):
+        self.event_name = event_name
+        self.data = data
 
 
 class RabbitMQPort(Protocol):
-    async def publish(self, event_message: InfraEventMessage) -> None: ...
+    async def publish(self, event_message: EventMessage) -> None: ...
     async def connect(self) -> None: ...
     async def disconnect(self) -> None: ...
 
@@ -46,13 +47,15 @@ class RabbitMQManager:
         if self.connection and not self.connection.is_closed:
             await self.connection.close()
 
-    async def publish(self, event_message: InfraEventMessage) -> None:
+    async def publish(self, event_message: EventMessage) -> None:
         if not self.connection:
             await self.connect()
 
         channel = await self.connection.channel()
 
-        message_body = str(event_message.data).encode("utf-8")
+        event_message_data = event_message.data.__dict__
+
+        message_body = str(event_message_data).encode("utf-8")
         message = Message(message_body)
 
         await channel.default_exchange.publish(

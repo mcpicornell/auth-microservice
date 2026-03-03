@@ -1,6 +1,9 @@
 from uuid import UUID
 
-from src.app.domain.entities.event_message import EventMessage
+from src.app.domain.entities.event_message import (
+    EventUserData,
+    PublishEventMessageInput,
+)
 from src.app.domain.entities.token import CreateTokenInput
 from src.app.domain.entities.user import (
     CreateUserInput,
@@ -21,61 +24,66 @@ from src.app.domain.ports import (
 class AuthService:
     def __init__(
         self,
-        user_repository: UserRepositoryPort,
-        token_provider: TokenProviderPort,
-        event_publisher: EventPublisherPort,
+        user_repository_port: UserRepositoryPort,
+        token_provider_port: TokenProviderPort,
+        event_publisher_port: EventPublisherPort,
     ):
-        self.user_repository = user_repository
-        self.token_provider = token_provider
-        self.event_publisher = event_publisher
+        self._user_repository_port = user_repository_port
+        self._token_provider_port = token_provider_port
+        self._event_publisher_port = event_publisher_port
 
     async def create_user(self, input_data: CreateUserInput) -> CreateUserOutput:
-        existing_user = await self.user_repository.get_by_email(input_data.email)
+        existing_user = await self._user_repository_port.get_by_email(input_data.email)
         if existing_user:
             return CreateUserOutput(
                 user=None, success=False, message="Email already registered"
             )
 
-        existing_user = await self.user_repository.get_by_username(input_data.username)
+        existing_user = await self._user_repository_port.get_by_username(
+            input_data.username
+        )
         if existing_user:
             return CreateUserOutput(
                 user=None, success=False, message="Username already taken"
             )
 
-        user_entity = await self.user_repository.create(input_data)
+        user_entity = await self._user_repository_port.create(input_data)
 
-        event_message = EventMessage(
+        event_message = PublishEventMessageInput(
             event_name="user.created",
-            data={
-                "user_id": str(user_entity.id),
-                "email": user_entity.email,
-                "username": user_entity.username,
-            },
+            data=EventUserData(
+                user_id=str(user_entity.id),
+                email=user_entity.email,
+                username=user_entity.username,
+            ),
         )
-        await self.event_publisher.publish(event_message)
+        await self._event_publisher_port.publish(event_message)
 
         return CreateUserOutput(
             user=user_entity, success=True, message="User created successfully"
         )
 
     async def login(self, input_data: LoginInput) -> LoginOutput:
-        user = await self.user_repository.get_by_email(input_data.email)
+        user = await self._user_repository_port.get_by_email(input_data.email)
         if not user:
             raise ValueError("Invalid credentials")
 
         token_input = CreateTokenInput(user_id=str(user.id), email=user.email)
 
-        access_token_output = self.token_provider.create_access_token(token_input)
-        refresh_token_output = self.token_provider.create_refresh_token(token_input)
-
-        event_message = EventMessage(
-            event_name="user.login",
-            data={
-                "user_id": str(user.id),
-                "email": user.email,
-            },
+        access_token_output = self._token_provider_port.create_access_token(token_input)
+        refresh_token_output = self._token_provider_port.create_refresh_token(
+            token_input
         )
-        await self.event_publisher.publish(event_message)
+
+        event_message = PublishEventMessageInput(
+            event_name="user.login",
+            data=EventUserData(
+                user_id=str(user.id),
+                email=user.email,
+                username=user.username,
+            ),
+        )
+        await self._event_publisher_port.publish(event_message)
 
         return LoginOutput(
             access_token=access_token_output.access_token,
@@ -85,24 +93,24 @@ class AuthService:
         )
 
     async def get_user(self, user_id: UUID) -> GetUserOutput:
-        user = await self.user_repository.get_by_id(user_id)
+        user = await self._user_repository_port.get_by_id(user_id)
         if not user:
             return GetUserOutput(user=None, success=False, message="User not found")
         return GetUserOutput(user=user, success=True)
 
     async def get_user_by_email(self, email: str) -> GetUserOutput:
-        user = await self.user_repository.get_by_email(email)
+        user = await self._user_repository_port.get_by_email(email)
         if not user:
             return GetUserOutput(user=None, success=False, message="User not found")
         return GetUserOutput(user=user, success=True)
 
     async def update_user(self, input_data: UpdateUserInput) -> UpdateUserOutput:
-        existing_user = await self.user_repository.get_by_id(input_data.id)
+        existing_user = await self._user_repository_port.get_by_id(input_data.id)
         if not existing_user:
             return UpdateUserOutput(user=None, success=False, message="User not found")
 
         if input_data.email and input_data.email != existing_user.email:
-            email_user = await self.user_repository.get_by_email(input_data.email)
+            email_user = await self._user_repository_port.get_by_email(input_data.email)
             if email_user:
                 return UpdateUserOutput(
                     user=None, success=False, message="Email already registered"
@@ -110,7 +118,7 @@ class AuthService:
             existing_user.email = input_data.email
 
         if input_data.username and input_data.username != existing_user.username:
-            username_user = await self.user_repository.get_by_username(
+            username_user = await self._user_repository_port.get_by_username(
                 input_data.username
             )
             if username_user:
@@ -125,17 +133,17 @@ class AuthService:
         if input_data.is_admin is not None:
             existing_user.is_admin = input_data.is_admin
 
-        updated_user = await self.user_repository.update(existing_user)
+        updated_user = await self._user_repository_port.update(existing_user)
 
-        event_message = EventMessage(
+        event_message = PublishEventMessageInput(
             event_name="user.updated",
-            data={
-                "user_id": str(updated_user.id),
-                "email": updated_user.email,
-                "username": updated_user.username,
-            },
+            data=EventUserData(
+                user_id=str(updated_user.id),
+                email=updated_user.email,
+                username=updated_user.username,
+            ),
         )
-        await self.event_publisher.publish(event_message)
+        await self._event_publisher_port.publish(event_message)
 
         return UpdateUserOutput(
             user=updated_user, success=True, message="User updated successfully"

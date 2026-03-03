@@ -45,12 +45,12 @@ async def test_service_creation():
     mock_event_publisher = Mock(spec=EventPublisherPort)
 
     auth_service = AuthService(
-        user_repository=mock_user_repo,
-        token_provider=mock_token_provider,
-        event_publisher=mock_event_publisher,
+        user_repository_port=mock_user_repo,
+        token_provider_port=mock_token_provider,
+        event_publisher_port=mock_event_publisher,
     )
 
     assert auth_service is not None
-    assert auth_service.user_repository == mock_user_repo
-    assert auth_service.token_provider == mock_token_provider
-    assert auth_service.event_publisher == mock_event_publisher
+    assert auth_service._user_repository_port == mock_user_repo
+    assert auth_service._token_provider_port == mock_token_provider
+    assert auth_service._event_publisher_port == mock_event_publisher

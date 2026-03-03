@@ -46,9 +46,9 @@ class TestAuthServiceBasic:
             mock_user_repository, mock_token_provider, mock_event_publisher
         )
 
-        assert service.user_repository == mock_user_repository
-        assert service.token_provider == mock_token_provider
-        assert service.event_publisher == mock_event_publisher
+        assert service._user_repository_port == mock_user_repository
+        assert service._token_provider_port == mock_token_provider
+        assert service._event_publisher_port == mock_event_publisher
 
     @pytest.mark.asyncio
     async def test_get_user_success(self, auth_service, mock_user_repository):

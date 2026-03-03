@@ -1,4 +1,4 @@
-from .event_message import EventMessage
+from .event_message import EventUserData, PublishEventMessageInput
 from .token import CreateTokenInput, CreateTokenOutput, DecodedToken, TokenEntity
 from .user import (
     CreateUserInput,
@@ -24,5 +24,6 @@ __all__ = [
     "CreateTokenInput",
     "CreateTokenOutput",
     "DecodedToken",
-    "EventMessage",
+    "PublishEventMessageInput",
+    "EventUserData",
 ]

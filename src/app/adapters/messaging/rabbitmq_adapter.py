@@ -1,14 +1,16 @@
 from typing import Protocol
 
-from src.app.domain.entities.event_message import EventMessage
+from src.app.domain.entities.event_message import PublishEventMessageInput
 from src.app.infra.messaging.rabbitmq_manager import (
-    InfraEventMessage,
     RabbitMQPort,
 )
+from src.app.infra.messaging.rabbitmq_types import EventMessage, UserData
 
 
 class RabbitMQAdapterPort(Protocol):
-    async def publish(self, event_message: EventMessage) -> None: ...
+    async def publish(
+        self, publish_event_message_input: PublishEventMessageInput
+    ) -> None: ...
     async def connect(self) -> None: ...
     async def disconnect(self) -> None: ...
 
@@ -20,11 +22,12 @@ class RabbitMQAdapter(RabbitMQAdapterPort):
     async def connect(self):
         await self.rabbitmq_manager.connect()
 
-    async def publish(self, event_message: EventMessage):
-        infra_message = InfraEventMessage(
-            event_name=event_message.event_name,
-            data=event_message.data,
+    async def publish(self, publish_event_message_input: PublishEventMessageInput):
+        infra_message = EventMessage(
+            event_name=publish_event_message_input.event_name,
+            data=UserData(**publish_event_message_input.data.__dict__),
         )
+
         await self.rabbitmq_manager.publish(infra_message)
 
     async def disconnect(self) -> None:

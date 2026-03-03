@@ -76,9 +76,9 @@ class DependenciesContainer:
 
     async def _initialize_services(self):
         self._auth_service = AuthService(
-            user_repository=self._user_adapter,
-            token_provider=self._jwt_adapter,
-            event_publisher=self._rabbitmq_adapter,
+            user_repository_port=self._user_adapter,
+            token_provider_port=self._jwt_adapter,
+            event_publisher_port=self._rabbitmq_adapter,
         )
 
     async def _initialize_infra_adapters(self):

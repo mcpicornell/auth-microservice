@@ -1,14 +1,18 @@
 from dataclasses import dataclass
+from typing import Union
 
 
 @dataclass
-class EventUserData:
+class UserData:
     user_id: str
     email: str
     username: str
 
 
+type EventData = Union[UserData]
+
+
 @dataclass
-class PublishEventMessageInput:
+class EventMessage:
     event_name: str
-    data: EventUserData
+    data: EventData

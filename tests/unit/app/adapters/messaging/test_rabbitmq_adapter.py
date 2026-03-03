@@ -1,8 +1,11 @@
 import pytest
 
 from src.app.adapters.messaging.rabbitmq_adapter import RabbitMQAdapter
-from src.app.domain.entities.event_message import EventMessage
-from src.app.infra.messaging.rabbitmq_manager import InfraEventMessage
+from src.app.domain.entities.event_message import (
+    EventUserData,
+    PublishEventMessageInput,
+)
+from src.app.infra.messaging.rabbitmq_types import EventMessage
 
 
 class TestRabbitMQAdapter:
@@ -26,15 +29,17 @@ class TestRabbitMQAdapter:
     async def test_publish(self, rabbitmq_adapter, mock_rabbitmq_manager, mocker):
         mock_rabbitmq_manager.publish = mocker.AsyncMock()
         event_name = "user_created"
-        data = {"user_id": "123", "email": "test@example.com"}
-        event_message = EventMessage(event_name=event_name, data=data)
+        event_data = EventUserData(
+            user_id="123", email="test@example.com", username="testuser"
+        )
+        publish_input = PublishEventMessageInput(event_name=event_name, data=event_data)
 
-        await rabbitmq_adapter.publish(event_message)
+        await rabbitmq_adapter.publish(publish_input)
 
-        # Verify that the adapter converts domain EventMessage to InfraEventMessage
-        expected_infra_message = InfraEventMessage(
+        # Verify that adapter converts domain PublishEventMessageInput to EventMessage
+        expected_infra_message = EventMessage(
             event_name=event_name,
-            data=data,
+            data=EventUserData(**event_data.__dict__),
         )
         mock_rabbitmq_manager.publish.assert_called_once_with(expected_infra_message)
 

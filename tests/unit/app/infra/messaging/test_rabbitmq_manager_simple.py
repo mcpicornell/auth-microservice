@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from src.app.domain.entities.event_message import EventUserData
 from src.app.infra.messaging.rabbitmq_manager import InfraEventMessage, RabbitMQManager
 
 
@@ -89,7 +90,12 @@ class TestRabbitMQManager:
         mock_connection.channel = AsyncMock(return_value=mock_new_channel)
         manager.connection = mock_connection
 
-        message = InfraEventMessage(event_name="test.event", data={"test": "data"})
+        message = InfraEventMessage(
+            event_name="test.event",
+            data=EventUserData(
+                user_id="123", email="test@example.com", username="testuser"
+            ),
+        )
 
         await manager.publish(message)
 
@@ -118,7 +124,12 @@ class TestRabbitMQManager:
             mock_channel.default_exchange.publish = AsyncMock()
             mock_connect.return_value = mock_connection
 
-            message = InfraEventMessage(event_name="test.event", data={"test": "data"})
+            message = InfraEventMessage(
+                event_name="test.event",
+                data=EventUserData(
+                    user_id="123", email="test@example.com", username="testuser"
+                ),
+            )
 
             await manager.publish(message)
 
